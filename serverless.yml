@@ -1,0 +1,41 @@
+org: devlovelace
+app: lite-thonking-pdf-inventory
+service: lite-thonking-pdf-inventory
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  timeout: 180
+  memorySize: 256
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - cognito-idp:AdminInitiateAuth
+        - cognito-idp:AdminCreateUser
+        - cognito-idp:AdminSetUserPassword
+      Resource: "*"
+
+    - Effect: "Allow"
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:Scan
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:us-east-1:523199501603:table/lite-thinking-dev"
+
+functions:
+  generatePDF:
+    handler: index.handler
+    timeout: 180
+    memorySize: 256
+    events:
+      - http:
+          path: generatePDF
+          method: post
+          cors: true # <-- CORS!
+
