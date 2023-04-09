@@ -53,8 +53,8 @@ module.exports.generatePDF = async (event) => {
       port: 465,
       secure: true,
       auth: {
-        user: "camilj31@gmail.com",
-        pass: "jvlxtgevadfnwbzf",
+        user: process.env.nodemailer_user,
+        pass: process.env.nodemailer_pss,
       },
     });
     const accessToken = event.headers.Authorization.substring(7);
@@ -62,7 +62,7 @@ module.exports.generatePDF = async (event) => {
 
     // Configurar el mensaje de correo electrónico
     const mailOptions = {
-      from: "camilj31@gmail.com",
+      from: process.env.nodemailer_user,
       to: decoded.email,
       subject: "Archivo PDF de inventario",
       text: "Archivo PDF generado",
