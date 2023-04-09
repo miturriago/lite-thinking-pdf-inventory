@@ -30,7 +30,7 @@ provider:
 
 functions:
   generatePDF:
-    handler: index.handler
+    handler: index.generatePDF
     timeout: 180
     memorySize: 256
     events:
