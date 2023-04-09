@@ -30,7 +30,7 @@ provider:
 
 functions:
   generatePDF:
-    handler: index.handler
+    handler: index.generatePDF
     timeout: 180
     memorySize: 256
     events:
@@ -38,4 +38,9 @@ functions:
           path: generatePDF
           method: post
           cors: true # <-- CORS!
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: arn:aws:cognito-idp:us-east-1:523199501603:userpool/us-east-1_152dyJXwj
+
 
