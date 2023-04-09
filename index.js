@@ -3,6 +3,7 @@ require("dotenv").config();
 const AWS = require("aws-sdk");
 const dynamoDb = require("./services/dynamo.service");
 const ajvO = require("ajv");
+const jwt_decode = require("jwt-decode");
 const PDFDocument = require("pdfkit");
 const nodemailer = require("nodemailer");
 
@@ -56,13 +57,15 @@ module.exports.generatePDF = async (event) => {
         pass: "jvlxtgevadfnwbzf",
       },
     });
+    const accessToken = event.headers.Authorization.substring(7);
+    let decoded = jwt_decode(accessToken);
 
     // Configurar el mensaje de correo electrónico
     const mailOptions = {
       from: "camilj31@gmail.com",
-      to: "mauriciomaldo.14@gmail.com",
-      subject: "Archivo PDF generado",
-      text: "Archivo PDF generado a partir de los datos de la tabla de DynamoDB",
+      to: decoded.email,
+      subject: "Archivo PDF de inventario",
+      text: "Archivo PDF generado",
       attachments: [
         {
           filename: "archivo.pdf",
