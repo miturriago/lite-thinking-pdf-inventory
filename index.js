@@ -32,18 +32,76 @@ module.exports.generatePDF = async (event) => {
   const { nit } = data;
 
   let resultRequest = {};
-
   try {
     resultRequest = await dynamoDb.scan(
       nit,
       process.env.TABLE_NAME + "-" + process.env.STAGE
     );
+    let mat = [];
+
+    for (let i = 0; i < resultRequest.length; i++) {
+      mat.push([resultRequest[i].fullName, resultRequest[i].quantity]);
+    }
+
+    console.log(mat);
+
+    const accessToken = event.headers.Authorization.substring(7);
+    let decoded = jwt_decode(accessToken);
+    const downloadDate = new Date().toDateString();
+
     const doc = new PDFDocument();
-    // Código a ejecutar en cada iteración
-    // Generar el contenido del PDF
-    resultRequest.forEach((item) => {
-      doc.text(item.fullName + " " + item.quantity);
-    });
+    doc.font("Helvetica-Bold");
+    doc.moveDown();
+    doc.text("Lite Thinking - Inventario", { align: "center" });
+    doc.text("Descargado por: ", { align: "left" });
+    doc.font("Helvetica");
+    doc.text(decoded.email, { align: "left" });
+    doc.font("Helvetica-Bold");
+    doc.text("Fecha de envío: ", { align: "left" });
+    doc.font("Helvetica");
+    doc.text(downloadDate, { align: "left" });
+
+    doc.moveDown().moveDown().moveDown().moveDown();
+
+    // Crea una tabla con dos filas y dos columnas
+    const table = {
+      headers: ["Nombre", "Cantidad"],
+      rows: mat,
+    };
+
+    // Define la posición y tamaño de la tabla
+    const startX = 115;
+    const startY = 170;
+    const rowHeight = 50;
+    const colWidth = 200;
+
+    // Dibuja los encabezados de la tabla
+    doc.font("Helvetica-Bold");
+    for (let i = 0; i < table.headers.length; i++) {
+      doc.rect(startX + i * colWidth, startY, colWidth, rowHeight).stroke();
+      doc.text(table.headers[i], startX + i * colWidth + 10, startY + 20);
+    }
+
+    // Dibuja las celdas de la tabla
+    doc.font("Helvetica");
+    for (let i = 0; i < table.rows.length; i++) {
+      for (let j = 0; j < table.rows[i].length; j++) {
+        doc
+          .rect(
+            startX + j * colWidth,
+            startY + (i + 1) * rowHeight,
+            colWidth,
+            rowHeight
+          )
+          .stroke();
+        doc.text(
+          table.rows[i][j].toString(),
+          startX + j * colWidth + 10,
+          startY + (i + 1) * rowHeight + 20
+        );
+      }
+    }
+
     doc.end();
 
     // Configurar el transporte SMTP para enviar el correo electrónico
@@ -57,8 +115,6 @@ module.exports.generatePDF = async (event) => {
         pass: process.env.nodemailer_pss,
       },
     });
-    const accessToken = event.headers.Authorization.substring(7);
-    let decoded = jwt_decode(accessToken);
 
     // Configurar el mensaje de correo electrónico
     const mailOptions = {
