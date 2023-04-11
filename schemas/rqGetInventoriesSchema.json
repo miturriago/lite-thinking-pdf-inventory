@@ -7,10 +7,11 @@
   "default": {},
   "examples": [
     {
-      "nit": "string"
+      "nit": "string",
+      "email": "string"
     }
   ],
-  "required": ["nit"],
+  "required": ["nit", "email"],
   "additionalProperties": true,
   "properties": {
     "nit": {
@@ -19,6 +20,15 @@
       "maxLength": 20,
       "minLength": 1,
       "title": "The nit schema",
+      "description": "An explanation about the purpose of this instance.",
+      "default": ""
+    },
+    "email": {
+      "$id": "#/properties/email",
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "The email schema",
       "description": "An explanation about the purpose of this instance.",
       "default": ""
     }

@@ -18,6 +18,11 @@ provider:
         - cognito-idp:AdminSetUserPassword
       Resource: "*"
 
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: "arn:aws:s3:::lov-file-inventory"
+
     - Effect: "Allow"
       Action:
         - dynamodb:GetItem
@@ -42,5 +47,3 @@ functions:
             name: PrivateAuthorizer
             type: COGNITO_USER_POOLS
             arn: arn:aws:cognito-idp:us-east-1:523199501603:userpool/us-east-1_152dyJXwj
-
-
