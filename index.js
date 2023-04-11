@@ -3,9 +3,18 @@ require("dotenv").config();
 const AWS = require("aws-sdk");
 const dynamoDb = require("./services/dynamo.service");
 const ajvO = require("ajv");
+const nodemailer = require("nodemailer");
 const jwt_decode = require("jwt-decode");
 const PDFDocument = require("pdfkit");
-const nodemailer = require("nodemailer");
+
+AWS.config.update({
+  maxRetries: 3,
+  httpOptions: { timeout: 30000, connectTimeout: 5000 },
+  region: "us-east-1",
+  accessKeyId: process.env.ACCESS_KEY_ID,
+  accessSecretKey: process.env.ACCESS_SECRET_KEY,
+});
+const s3 = new AWS.S3();
 
 const ajvRq = new ajvO();
 
@@ -15,7 +24,7 @@ const validateGetRq = ajvRq.compile(schemaGetInventoriesRq);
 module.exports.generatePDF = async (event) => {
   const data = JSON.parse(event.body);
   let valid = validateGetRq(data);
-
+  let putObjectResult, resultUpload;
   if (!valid) {
     return {
       statusCode: 406,
@@ -29,7 +38,7 @@ module.exports.generatePDF = async (event) => {
       }),
     };
   }
-  const { nit } = data;
+  const { nit, email } = data;
 
   let resultRequest = {};
   try {
@@ -119,7 +128,7 @@ module.exports.generatePDF = async (event) => {
     // Configurar el mensaje de correo electrónico
     const mailOptions = {
       from: process.env.nodemailer_user,
-      to: decoded.email,
+      to: email,
       subject: "Archivo PDF de inventario",
       text: "Archivo PDF generado",
       attachments: [
@@ -133,15 +142,36 @@ module.exports.generatePDF = async (event) => {
 
     // Enviar el correo electrónico
     const result = await transporter.sendMail(mailOptions);
-    console.log(result);
+    /*
+    const bucketName = "lov-file-inventory";
+    var now = new Date().getTime();
+    const key = nit + "-inventario-" + now + ".pdf";
+
+    const params = {
+      Bucket: bucketName,
+      Key: key,
+      Body: doc,
+      contentType: "application/pdf",
+    };
+    resultUpload = await s3.upload(params).promise();
+    console.log(resultUpload);
+
+    const paramsExp = {
+      Bucket: bucketName,
+      Key: key,
+      Expires: 28800,
+    };
+    putObjectResult = await s3.getSignedUrl(paramsExp).promise();
+    console.log(putObjectResult);*/
   } catch (error) {
-    console.log("Error get users: ", error);
+    console.log(error);
     return {
       statusCode: 400,
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Credentials": true,
       },
+      body: JSON.stringify({ error }),
     };
   }
 
@@ -153,6 +183,7 @@ module.exports.generatePDF = async (event) => {
     },
     body: JSON.stringify({
       message: "PDF generado y enviado por correo electrónico",
+      pdf: putObjectResult,
     }),
   };
 };
